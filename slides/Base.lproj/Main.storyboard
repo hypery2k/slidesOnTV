@@ -240,9 +240,6 @@
                                             <rect key="frame" x="0.0" y="0.0" width="1722" height="100"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                         </tableViewCellContentView>
-                                        <connections>
-                                            <outlet property="selectedBackgroundView" destination="UAo-pM-QPU" id="nkl-3Z-i8d"/>
-                                        </connections>
                                     </tableViewCell>
                                 </prototypes>
                                 <connections>

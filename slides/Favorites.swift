@@ -14,9 +14,14 @@ typealias FavoriteData = ( key:String, value:Any )
 
 
 func rxFavorites() -> Observable<FavoriteData> {
+    return Observable.from(favorites())
+    
+}
+
+func favorites() -> [FavoriteData] {
     let sequence = NSUbiquitousKeyValueStore.default().dictionaryRepresentation.enumerated()
     
-    return Observable.from(sequence).map { (t) in return t.element }
+    return sequence.map{ (t) in return t.element }
     
 }
 

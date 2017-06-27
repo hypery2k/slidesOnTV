@@ -18,6 +18,7 @@ class UIFavoriteCell : UITableViewCell {
         super.init(coder: aDecoder)
         
     }
+    /*
     
     private var _preferredFocusEnvironments:[UIFocusEnvironment]?
     
@@ -57,7 +58,6 @@ class UIFavoriteCell : UITableViewCell {
         return true
     }
     
-    /*
     override func didUpdateFocus(in context: UIFocusUpdateContext, with coordinator: UIFocusAnimationCoordinator) {
         super.didUpdateFocus(in: context, with: coordinator)
         
@@ -93,10 +93,11 @@ class FavoritesViewController: UIViewController, UITableViewDelegate {
         }
     }
 
+    let favoriteItems: Variable<[FavoriteData]> = Variable([])
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.setEditing(true, animated: false)
         /*
          tableView.rx.itemSelected
          .subscribe(  onNext: { [weak self] value in
@@ -116,6 +117,15 @@ class FavoritesViewController: UIViewController, UITableViewDelegate {
          })
          .disposed(by: disposeBag)
          */
+        
+        
+        let _ = tableView.rx.itemDeleted.subscribe(  onNext:{ [weak self] (indexPath) in
+        
+            self?.tableView.beginUpdates()
+            self?.tableView.deleteRows(at: [indexPath], with: .fade)
+            self?.favoriteItems.value.remove(at: indexPath.row)
+            self?.tableView.endUpdates()
+        })
         
         
         let itemSelected = tableView.rx.itemSelected
@@ -158,9 +168,14 @@ class FavoritesViewController: UIViewController, UITableViewDelegate {
                         let _ = commandView
                             .removeButton
                             .subscribe( onNext: { _ in
-                                    self?.bindTo?.dispose()
+                                    self?.tableView.beginUpdates()
+                                    //self?.bindTo?.dispose()
                                     favoriteRemove(key: element.1.key, synchronize: true )
-                                    self?.bindTo = self?.rxReloadData()
+                                    //self?.bindTo = self?.rxReloadData()
+                                    //self?.tableView.deleteRows(at: [element.0], with: .fade)
+                                    self?.tableView.endUpdates()
+                                    
+                                    print( "==> REMOVED" )
                                 
                                 })
                                 
@@ -193,9 +208,9 @@ class FavoritesViewController: UIViewController, UITableViewDelegate {
     private var bindTo:Disposable?
     
     private func rxReloadData() -> Disposable {
-        let favoriteItems = rxFavorites().toArray()
+        favoriteItems.value.append(contentsOf: favorites())
         
-        return favoriteItems
+        return favoriteItems.asObservable()
         .bind(to: tableView.rx.items(cellIdentifier: "favoriteCell", cellType: UIFavoriteCell.self)) { (row, element, cell) in
         
                 if let data = element.value as? [String:String], let title = data["title"] {
@@ -209,6 +224,9 @@ class FavoritesViewController: UIViewController, UITableViewDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         bindTo = rxReloadData()
+        
+        self.tableView.setEditing(true, animated: true)
+
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -312,6 +330,16 @@ extension FavoritesViewController {
                 self.tableView.deselectRow(at: selectedIndex, animated: true)
             }
         }
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCellEditingStyle {
+        print( "editingStyleForRowAt" )
+        return .delete
+    }
+    
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        print( "canEditRowAt" )
         return true
     }
 
